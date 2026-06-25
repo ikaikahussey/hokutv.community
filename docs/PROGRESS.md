@@ -15,7 +15,7 @@ and [`acquisition-module.md`](acquisition-module.md) (Phase A–D). A phase is
 | 6 | Directory (apex) | ✅ done | only published+listed; grouping/search/paginate; unlist removes |
 | 7 | Billing (Stripe) | ✅ done | checkout upgrades plan; cancel reverts; gate flips with plan |
 | 8 | HOKU Ads module | ✅ core | render/targeting/pacing/rollups/refund + serving (buying-wizard UI deferred) |
-| 9 | Hardening | ⬜ | rate-limit; headers; cookie boundary; a11y |
+| 9 | Hardening | ✅ done | rate-limit trips; security headers; cookie boundary; axe a11y |
 | A–D | Acquisition funnel (minimal) | ⬜ | pipeline w/ mocks; compliance flagged → `COUNSEL.md` |
 
 ## Environment constraints in this sandbox
