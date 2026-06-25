@@ -23,8 +23,13 @@ export interface DomainConfig {
 export function getDomainConfig(
   env: Record<string, string | undefined> = process.env
 ): DomainConfig {
+  // On Vercel with no custom domains yet (demo deploy), fall back to the
+  // project's production *.vercel.app host so the apex (marketing + directory)
+  // resolves out of the box instead of 404-ing as an unknown/custom host. A
+  // real deployment sets APP_BASE_DOMAIN explicitly, so this never applies there.
+  const apexFallback = env.VERCEL_PROJECT_PRODUCTION_URL ?? "hoku.com";
   return {
-    appBaseDomain: env.APP_BASE_DOMAIN ?? "hoku.com",
+    appBaseDomain: env.APP_BASE_DOMAIN ?? apexFallback,
     tenantBaseDomain: env.TENANT_BASE_DOMAIN ?? "hokusites.com",
     adsHost: env.ADS_HOST ?? "ads.hoku.com",
   };
