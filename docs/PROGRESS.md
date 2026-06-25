@@ -14,7 +14,7 @@ and [`acquisition-module.md`](acquisition-module.md) (Phase A–D). A phase is
 | 5 | Custom domains (paid tier) | ✅ done | plan gate; add/verify (Vercel mocked); domains RLS |
 | 6 | Directory (apex) | ✅ done | only published+listed; grouping/search/paginate; unlist removes |
 | 7 | Billing (Stripe) | ✅ done | checkout upgrades plan; cancel reverts; gate flips with plan |
-| 8 | HOKU Ads module | ⬜ | on-brand render; targeting; pacing; refund |
+| 8 | HOKU Ads module | ✅ core | render/targeting/pacing/rollups/refund + serving (buying-wizard UI deferred) |
 | 9 | Hardening | ⬜ | rate-limit; headers; cookie boundary; a11y |
 | A–D | Acquisition funnel (minimal) | ⬜ | pipeline w/ mocks; compliance flagged → `COUNSEL.md` |
 
@@ -114,3 +114,21 @@ and [`acquisition-module.md`](acquisition-module.md) (Phase A–D). A phase is
 - Admin `/domains` form is plan-gated via the same logic. Gate proven by units:
   free plan never reaches Vercel; paid records hostname + pending verification;
   activation mirrors to routing. `rls-domains` proves tenant isolation.
+
+## Phase 8 notes (ads)
+
+- Pure, fully-tested ad logic in `lib/ads/`: `targeting` (category + geo radius
+  via haversine), `pacing` (servable = approved/active + budget; selection with
+  frequency cap; `chargeImpression` pauses at exhaustion), `rollups` (raw events
+  → hourly, totals match), `moderation` (https + prohibited-content checks →
+  auto-refund of unspent budget), `creative` (token-driven variants; on-brand
+  render with no hardcoded color).
+- `0006_ads.sql`: creatives/campaigns/slots/participation/events/rollups + RLS.
+  Creatives/campaigns are tenant-scoped; raw `ad_events`/rollups are
+  service-role only (dashboards read rollups, never raw).
+- Serving endpoint `ads.hoku.com/api/serve` (→ `/ads/api/serve`): selects an
+  eligible ad, logs an impression, returns the on-brand creative token config
+  (demo campaign in the sandbox). **Unapproved campaigns never serve.**
+- **Deferred:** the multi-step buying-wizard UI (Creative→Targeting→Budget→
+  Pay→dashboard) and the manual moderation queue screen. All their underlying
+  behaviors are implemented + tested; only the admin UI surface remains.
