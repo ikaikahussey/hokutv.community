@@ -13,7 +13,7 @@ and [`acquisition-module.md`](acquisition-module.md) (Phase A–D). A phase is
 | 4 | Theming UI (brand tokens) | ✅ done | re-skin via tokens (E2E); WCAG AA enforced/auto-corrected |
 | 5 | Custom domains (paid tier) | ✅ done | plan gate; add/verify (Vercel mocked); domains RLS |
 | 6 | Directory (apex) | ✅ done | only published+listed; grouping/search/paginate; unlist removes |
-| 7 | Billing (Stripe) | ⬜ | checkout upgrades plan; cancel reverts |
+| 7 | Billing (Stripe) | ✅ done | checkout upgrades plan; cancel reverts; gate flips with plan |
 | 8 | HOKU Ads module | ⬜ | on-brand render; targeting; pacing; refund |
 | 9 | Hardening | ⬜ | rate-limit; headers; cookie boundary; a11y |
 | A–D | Acquisition funnel (minimal) | ⬜ | pipeline w/ mocks; compliance flagged → `COUNSEL.md` |
