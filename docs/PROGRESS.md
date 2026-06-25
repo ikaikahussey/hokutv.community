@@ -8,7 +8,7 @@ and [`acquisition-module.md`](acquisition-module.md) (Phase A–D). A phase is
 |---|---|---|---|
 | 0 | Bootstrap & automation harness | ✅ done | trivial unit test + Playwright apex load |
 | 1 | Multi-tenant host routing | ✅ done | Host → route group; unknown → 404; cookie host-only |
-| 2 | Auth + tenant isolation (RLS) | ⬜ | magic-link round trip; RLS isolation |
+| 2 | Auth + tenant isolation (RLS) | ✅ done | magic-link contract + **real RLS isolation via PGlite** |
 | 3 | Block-based CMS | ⬜ | create/edit/reorder/publish; unpublished 404 |
 | 4 | Theming UI (brand tokens) | ⬜ | re-skin via tokens; WCAG AA auto-correct |
 | 5 | Custom domains (paid tier) | ⬜ | plan gate; add/verify (Vercel API mocked) |
@@ -21,9 +21,12 @@ and [`acquisition-module.md`](acquisition-module.md) (Phase A–D). A phase is
 ## Environment constraints in this sandbox
 
 - **No Docker daemon** → the live Supabase stack (`supabase start`) cannot boot
-  here. Database-touching logic is tested against in-memory fakes; SQL migrations
-  are authored as files and validated by review + typegen shape, not by a live
-  `db reset`.
+  here. Instead, RLS and SQL migrations are tested against **PGlite** — real
+  Postgres compiled to WASM, in-process, no Docker. The test harness
+  (`tests/helpers/pg.ts`) installs a Supabase-compatible `auth` shim
+  (`auth.uid()`, the anon/authenticated/service_role roles) and applies the
+  actual `supabase/migrations/*.sql`, so policies are exercised exactly as
+  Postgres enforces them.
 - Supabase/Stripe/Vercel CLIs are not installed in the sandbox; their flows are
   mocked in tests and documented for real local/CI environments.
 - Playwright runs against the pre-installed Chromium (build matching 1.56.1).
@@ -48,3 +51,19 @@ and [`acquisition-module.md`](acquisition-module.md) (Phase A–D). A phase is
   `Domain`). Unit-tested now; re-asserted end-to-end in Phase 9.
 - **Custom domains** (paid tenants) resolve via DB lookup in Phase 5; until then
   non-matching hosts are `unknown` → 404.
+
+## Phase 2 notes
+
+- `supabase/migrations/0001_init.sql` — `tenants` + `users` with RLS. Helper
+  functions `current_tenant_id()` / `is_platform_admin()` are `SECURITY DEFINER`
+  so the user-table policies don't recurse. `service_role` bypasses RLS for
+  serving/provisioning paths.
+- `tests/unit/rls.test.ts` (PGlite) proves: owner A sees only tenant A, owner B
+  only B, A can't read/update B's rows, non-admins can't insert tenants,
+  platform_admin sees all, anon sees none. **This is the real isolation gate.**
+- Magic-link flow: `lib/auth/magic-link.ts` (pure, unit-tested) + Supabase
+  clients (`lib/supabase/{server,client,service}.ts`) + `/login` action +
+  `/auth/callback` route. Callback + cookie are host-only on `app.hoku.com`.
+- The live magic-link round trip needs hosted Supabase Auth; its logic is a
+  contract test here. `sessions` are managed by Supabase `auth.*`, not a custom
+  table.

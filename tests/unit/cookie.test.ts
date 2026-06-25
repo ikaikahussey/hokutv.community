@@ -7,7 +7,7 @@ import {
 
 describe("auth cookie scoping (host-only boundary)", () => {
   it("never sets a Domain attribute (host-only)", () => {
-    const opts = authCookieOptions({ NODE_ENV: "production" } as NodeJS.ProcessEnv);
+    const opts = authCookieOptions({ NODE_ENV: "production" });
     expect(opts).not.toHaveProperty("domain");
     expect(opts.path).toBe("/");
     expect(opts.httpOnly).toBe(true);
@@ -16,10 +16,10 @@ describe("auth cookie scoping (host-only boundary)", () => {
 
   it("is secure only in production", () => {
     expect(
-      authCookieOptions({ NODE_ENV: "production" } as NodeJS.ProcessEnv).secure
+      authCookieOptions({ NODE_ENV: "production" }).secure
     ).toBe(true);
     expect(
-      authCookieOptions({ NODE_ENV: "development" } as NodeJS.ProcessEnv).secure
+      authCookieOptions({ NODE_ENV: "development" }).secure
     ).toBe(false);
   });
 

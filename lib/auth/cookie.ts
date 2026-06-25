@@ -18,7 +18,7 @@ export interface AuthCookieOptions {
 export const AUTH_COOKIE_NAME = "hoku-session";
 
 export function authCookieOptions(
-  env: NodeJS.ProcessEnv = process.env
+  env: Record<string, string | undefined> = process.env
 ): AuthCookieOptions {
   return {
     httpOnly: true,

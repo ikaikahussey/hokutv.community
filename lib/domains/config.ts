@@ -20,7 +20,9 @@ export interface DomainConfig {
   adsHost: string;
 }
 
-export function getDomainConfig(env: NodeJS.ProcessEnv = process.env): DomainConfig {
+export function getDomainConfig(
+  env: Record<string, string | undefined> = process.env
+): DomainConfig {
   return {
     appBaseDomain: env.APP_BASE_DOMAIN ?? "hoku.com",
     tenantBaseDomain: env.TENANT_BASE_DOMAIN ?? "hokusites.com",
