@@ -1,0 +1,38 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/**
+ * Default (platform) brand tokens. Per-tenant sites override these `--brand-*`
+ * variables at render time from `tenants.theme` (Phase 4). Nothing here is a
+ * hardcoded component color — components only ever reference these tokens.
+ */
+:root {
+  --brand-50: #eef6ff;
+  --brand-100: #d9ebff;
+  --brand-200: #bcdcff;
+  --brand-300: #8ec6ff;
+  --brand-400: #59a6ff;
+  --brand-500: #2f83f5;
+  --brand-600: #1b66e0;
+  --brand-700: #1751b4;
+  --brand-800: #184690;
+  --brand-900: #193d76;
+  --brand-950: #112648;
+  --brand-foreground: #ffffff;
+
+  --accent-500: #f59e0b;
+  --accent-foreground: #1a1205;
+
+  --surface: #ffffff;
+  --ink: #0b1220;
+
+  --font-heading: ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-body: ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+
+html,
+body {
+  background: var(--surface);
+  color: var(--ink);
+}

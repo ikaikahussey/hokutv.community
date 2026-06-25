@@ -1,0 +1,4 @@
+-- HOKU local seed data.
+-- Populated in later phases (demo tenant on a subdomain, a themed published
+-- site, a directory entry, and one live ad). Kept empty until Phase 2 lands the
+-- base schema so `supabase db reset` stays green from the start.
