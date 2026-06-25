@@ -18,10 +18,15 @@ export function ModerationQueue({ initial }: { initial: QueueItem[] }) {
   function decide(idx: number, decision: "approve" | "reject") {
     setRows((rs) => rs.map((r, i) => (i === idx ? { ...r, pending: true } : r)));
     startTransition(async () => {
-      const result = await decideCampaign(rows[idx].item, decision);
-      setRows((rs) =>
-        rs.map((r, i) => (i === idx ? { ...r, result, pending: false } : r))
-      );
+      try {
+        const result = await decideCampaign(rows[idx].item, decision);
+        setRows((rs) =>
+          rs.map((r, i) => (i === idx ? { ...r, result, pending: false } : r))
+        );
+      } catch {
+        // Clear the pending state so the admin can retry the decision.
+        setRows((rs) => rs.map((r, i) => (i === idx ? { ...r, pending: false } : r)));
+      }
     });
   }
 

@@ -54,7 +54,15 @@ export default function ParticipationPage() {
       <button
         type="button"
         disabled={saving}
-        onClick={() => startSave(async () => setMsg(await saveParticipation(rows)))}
+        onClick={() =>
+          startSave(async () => {
+            try {
+              setMsg(await saveParticipation(rows));
+            } catch {
+              setMsg({ ok: false, message: "Could not save — please try again." });
+            }
+          })
+        }
         className="mt-5 rounded-md bg-ink px-4 py-2 text-sm font-medium text-white disabled:opacity-60"
       >
         {saving ? "Saving…" : "Save"}

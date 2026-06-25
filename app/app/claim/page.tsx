@@ -81,9 +81,13 @@ export default function ClaimPage() {
             onClick={() =>
               startBusy(async () => {
                 setError(null);
-                const res = await startClaim(token);
-                if (res.ok) setStarted(res);
-                else setError(res.message);
+                try {
+                  const res = await startClaim(token);
+                  if (res.ok) setStarted(res);
+                  else setError(res.message);
+                } catch {
+                  setError("Something went wrong. Please try again.");
+                }
               })
             }
             className="self-start rounded-md bg-ink px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
@@ -130,9 +134,13 @@ export default function ClaimPage() {
             onClick={() =>
               startBusy(async () => {
                 setError(null);
-                const res = await finishClaim({ token, channel, code });
-                if (res.ok) setDone(res);
-                else setError(res.message);
+                try {
+                  const res = await finishClaim({ token, channel, code });
+                  if (res.ok) setDone(res);
+                  else setError(res.message);
+                } catch {
+                  setError("Something went wrong. Please try again.");
+                }
               })
             }
             className="self-start rounded-md bg-brand-600 px-4 py-2 text-sm font-medium text-brand-foreground hover:bg-brand-700 disabled:opacity-50"

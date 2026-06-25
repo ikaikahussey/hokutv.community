@@ -147,12 +147,16 @@ export default function BuyAdPage() {
               disabled={suggesting}
               onClick={() =>
                 startSuggest(async () => {
-                  const s = await suggestAdCopy({
-                    businessName: draft.headline || "your business",
-                    category: draft.category,
-                    offer: draft.offer,
-                  });
-                  setSuggestions(s);
+                  try {
+                    const s = await suggestAdCopy({
+                      businessName: draft.headline || "your business",
+                      category: draft.category,
+                      offer: draft.offer,
+                    });
+                    setSuggestions(s);
+                  } catch {
+                    /* suggestions are optional — ignore a transient failure */
+                  }
                 })
               }
               className="self-start rounded-md border border-brand-300 px-3 py-1.5 text-sm font-medium text-brand-700 hover:bg-brand-50 disabled:opacity-60"
@@ -306,9 +310,16 @@ export default function BuyAdPage() {
               disabled={!validation.ok || submitting}
               onClick={() =>
                 startSubmit(async () => {
-                  const res = await submitCampaign(draft);
-                  setResult(res);
-                  if (res.checkoutUrl) window.location.assign(res.checkoutUrl);
+                  try {
+                    const res = await submitCampaign(draft);
+                    setResult(res);
+                    if (res.checkoutUrl) window.location.assign(res.checkoutUrl);
+                  } catch {
+                    setResult({
+                      ok: false,
+                      message: "Something went wrong submitting your ad. Please try again.",
+                    });
+                  }
                 })
               }
               className="self-start rounded-md bg-brand-600 px-5 py-2.5 font-medium text-brand-foreground hover:bg-brand-700 disabled:opacity-60"
