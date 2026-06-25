@@ -36,3 +36,20 @@ export async function createCheckoutSession(
   });
   return { url: session.url, id: session.id };
 }
+
+/**
+ * Refund a (partial) ad payment when a campaign is rejected (build-prompt §8 —
+ * "auto-refund via Stripe API on rejection"). Amount is the unspent budget; the
+ * payment intent comes from the campaign's recorded `stripe_payment_id`.
+ */
+export async function refundPayment(
+  stripe: Stripe,
+  paymentIntentId: string,
+  amountCents: number
+): Promise<{ id: string }> {
+  const refund = await stripe.refunds.create({
+    payment_intent: paymentIntentId,
+    amount: amountCents,
+  });
+  return { id: refund.id };
+}
