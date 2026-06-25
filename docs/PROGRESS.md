@@ -16,7 +16,7 @@ and [`acquisition-module.md`](acquisition-module.md) (Phase A–D). A phase is
 | 7 | Billing (Stripe) | ✅ done | checkout upgrades plan; cancel reverts; gate flips with plan |
 | 8 | HOKU Ads module | ✅ core | render/targeting/pacing/rollups/refund + serving (buying-wizard UI deferred) |
 | 9 | Hardening | ✅ done | rate-limit trips; security headers; cookie boundary; axe a11y |
-| A–D | Acquisition funnel (minimal) | ⬜ | pipeline w/ mocks; compliance flagged → `COUNSEL.md` |
+| A–D | Acquisition funnel (minimal) | ✅ minimal | pipeline w/ mocks; suppression+privacy+verification guardrails; compliance → COUNSEL.md |
 
 ## Environment constraints in this sandbox
 
@@ -132,3 +132,28 @@ and [`acquisition-module.md`](acquisition-module.md) (Phase A–D). A phase is
 - **Deferred:** the multi-step buying-wizard UI (Creative→Targeting→Budget→
   Pay→dashboard) and the manual moderation queue screen. All their underlying
   behaviors are implemented + tested; only the admin UI surface remains.
+
+## Phase A–D notes (acquisition — minimal, compliance flagged for counsel)
+
+> **Not cleared for live sending.** Built minimal per direction; legal posture
+> (trademark, direct-mail law, data licensing) needs counsel sign-off —
+> `COUNSEL.md`. Guardrails are clearly-marked stubs, not fail-closed invariants.
+
+- `0007_acquisition.sql`: `acq_prospects` / `acq_suppression` / `acq_claims`
+  (internal; service-role writes, platform_admin reads). Applied + validated by
+  the PGlite harness alongside the other migrations.
+- `lib/acq/engine.ts` — the uploaded pipeline refactored to **dependency
+  injection** (Places / Lob mail / screenshot / repo all injected), so
+  discover→provision→screenshot→postcard is unit-tested with mocks (Phase A
+  gate): eligible business → provisional site + screenshot + queued postcard;
+  suppressed/seen/no-address skipped **before** any generation or send.
+- Minimal guardrails, surfaced + tested: provisional tenants are
+  unpublished/unlisted/`provisional` (`PROVISIONAL_TENANT_FLAGS`); the postcard
+  reads as an offer not a bill (`postcardComplianceIssues` finds no missing
+  disclosure / no bill-like language); discovery requires a mailable address.
+- `lib/acq/claim.ts` (Phase B/C) — claim requires the token AND a verified
+  second factor before transfer; token is single-use; founder credit + publish-
+  on-claim flow through `activateTenant`/`recordClaim`. Tested.
+- **Deferred:** the claim/verify/payment UI screens and the live external
+  integrations (real Places/Lob/Playwright keys). Pipeline + claim logic are
+  implemented and tested; the customer-facing claim wizard is not built.
