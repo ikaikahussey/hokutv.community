@@ -7,7 +7,7 @@ and [`acquisition-module.md`](acquisition-module.md) (Phase A–D). A phase is
 | Phase | Scope | Status | Test gate |
 |---|---|---|---|
 | 0 | Bootstrap & automation harness | ✅ done | trivial unit test + Playwright apex load |
-| 1 | Multi-tenant host routing | ⏳ next | Host → route group; cookie host-only |
+| 1 | Multi-tenant host routing | ✅ done | Host → route group; unknown → 404; cookie host-only |
 | 2 | Auth + tenant isolation (RLS) | ⬜ | magic-link round trip; RLS isolation |
 | 3 | Block-based CMS | ⬜ | create/edit/reorder/publish; unpublished 404 |
 | 4 | Theming UI (brand tokens) | ⬜ | re-skin via tokens; WCAG AA auto-correct |
@@ -33,3 +33,18 @@ and [`acquisition-module.md`](acquisition-module.md) (Phase A–D). A phase is
 - Next.js 15 (App Router) + TS, Tailwind 3 with CSS-variable brand tokens (no
   hardcoded component colors), Vitest + Playwright, GitHub Actions CI.
 - `tests/unit/slug.test.ts` — unit gate. `tests/e2e/apex.spec.ts` — apex load.
+
+## Phase 1 notes
+
+- `lib/domains/resolve-host.ts` — pure, unit-tested host → zone resolver
+  (apex / app / ads / tenant / unknown). `middleware.ts` rewrites by host.
+- **Route groups can't be rewrite targets** (they aren't URL segments), so the
+  rewrite targets are real internal segments: `/app`, `/ads`, `/s/[subdomain]`.
+  The marketing route group serves the apex `/`. Internal segments are 404'd on
+  the public apex so they don't leak into the indexable surface.
+- Host is read from `x-forwarded-host` (proxy/Vercel) then `host`; tests emulate
+  hosts via that header — no DNS needed. Bare `localhost` → apex for dev.
+- Cookie boundary: `lib/auth/cookie.ts` issues **host-only** auth cookies (no
+  `Domain`). Unit-tested now; re-asserted end-to-end in Phase 9.
+- **Custom domains** (paid tenants) resolve via DB lookup in Phase 5; until then
+  non-matching hosts are `unknown` → 404.
