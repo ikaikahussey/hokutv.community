@@ -9,7 +9,7 @@ and [`acquisition-module.md`](acquisition-module.md) (Phase A–D). A phase is
 | 0 | Bootstrap & automation harness | ✅ done | trivial unit test + Playwright apex load |
 | 1 | Multi-tenant host routing | ✅ done | Host → route group; unknown → 404; cookie host-only |
 | 2 | Auth + tenant isolation (RLS) | ✅ done | magic-link contract + **real RLS isolation via PGlite** |
-| 3 | Block-based CMS | ⬜ | create/edit/reorder/publish; unpublished 404 |
+| 3 | Block-based CMS | ✅ done | create/edit/reorder/publish (UI E2E); unpublished 404 (RLS) |
 | 4 | Theming UI (brand tokens) | ⬜ | re-skin via tokens; WCAG AA auto-correct |
 | 5 | Custom domains (paid tier) | ⬜ | plan gate; add/verify (Vercel API mocked) |
 | 6 | Directory (apex) | ⬜ | only published+listed; grouping/search |
@@ -67,3 +67,20 @@ and [`acquisition-module.md`](acquisition-module.md) (Phase A–D). A phase is
 - The live magic-link round trip needs hosted Supabase Auth; its logic is a
   contract test here. `sessions` are managed by Supabase `auth.*`, not a custom
   table.
+
+## Phase 3 notes
+
+- Content is data: `lib/cms/types.ts` (typed block union), `lib/cms/blocks.tsx`
+  (declarative registry + token-only renderer), `lib/cms/page-ops.ts` (pure
+  create/edit/reorder/publish). Editor at `/editor` is a thin client over those,
+  with a live preview that reuses the exact tenant renderer.
+- `supabase/migrations/0002_pages.sql` — `pages` + RLS. Anon may read only a
+  **published** page on a **published** tenant (`tenant_is_published()` is
+  SECURITY DEFINER so the anon policy doesn't depend on tenants-RLS). Members
+  CRUD their own tenant's pages.
+- Tenant route renders blocks via `getPublishedHomePage(subdomain)`: real DB
+  query when Supabase is configured (RLS hides unpublished → 404), generated
+  **demo** content otherwise so the sandbox renders end-to-end.
+- Gates: `page-ops` + `cms-render` units (ops + HTML-reflects-JSON + no hardcoded
+  hex), `rls-pages` (unpublished invisible to anon, tenant CRUD isolation),
+  `editor` E2E (full UI flow), `tenant` E2E (server-rendered blocks).
