@@ -10,7 +10,7 @@ and [`acquisition-module.md`](acquisition-module.md) (Phase A–D). A phase is
 | 1 | Multi-tenant host routing | ✅ done | Host → route group; unknown → 404; cookie host-only |
 | 2 | Auth + tenant isolation (RLS) | ✅ done | magic-link contract + **real RLS isolation via PGlite** |
 | 3 | Block-based CMS | ✅ done | create/edit/reorder/publish (UI E2E); unpublished 404 (RLS) |
-| 4 | Theming UI (brand tokens) | ⬜ | re-skin via tokens; WCAG AA auto-correct |
+| 4 | Theming UI (brand tokens) | ✅ done | re-skin via tokens (E2E); WCAG AA enforced/auto-corrected |
 | 5 | Custom domains (paid tier) | ⬜ | plan gate; add/verify (Vercel API mocked) |
 | 6 | Directory (apex) | ⬜ | only published+listed; grouping/search |
 | 7 | Billing (Stripe) | ⬜ | checkout upgrades plan; cancel reverts |
@@ -84,3 +84,18 @@ and [`acquisition-module.md`](acquisition-module.md) (Phase A–D). A phase is
 - Gates: `page-ops` + `cms-render` units (ops + HTML-reflects-JSON + no hardcoded
   hex), `rls-pages` (unpublished invisible to anon, tenant CRUD isolation),
   `editor` E2E (full UI flow), `tenant` E2E (server-rendered blocks).
+
+## Phase 4 notes
+
+- Pure theming math in `lib/theme/`: `color` (sRGB + WCAG luminance/contrast),
+  `scale` (50–950 from one primary), `contrast` (AA foreground — always
+  achievable at 4.5; auto-corrects by darkening when a brand insists on white
+  text), `tokens` (curated fonts/layouts → CSS-var map), `logo`
+  (suggest color from canvas pixels).
+- Owner sets ≤1 primary + optional accent + font + layout; everything else is
+  derived. Tokens are applied per-tenant as CSS custom properties scoped on the
+  tenant subtree, so a color change re-skins every block with no rebuild.
+- `/theme` editor has a token-driven live preview. E2E reads computed colors in
+  the browser: changing the primary re-skins the CTA AND the CTA still passes
+  WCAG AA. Unit tests cover scale direction, AA enforcement + auto-correction,
+  and logo color suggestion.
