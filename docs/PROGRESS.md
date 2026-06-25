@@ -14,9 +14,15 @@ and [`acquisition-module.md`](acquisition-module.md) (Phase A–D). A phase is
 | 5 | Custom domains (paid tier) | ✅ done | plan gate; add/verify (Vercel mocked); domains RLS |
 | 6 | Directory (apex) | ✅ done | only published+listed; grouping/search/paginate; unlist removes |
 | 7 | Billing (Stripe) | ✅ done | checkout upgrades plan; cancel reverts; gate flips with plan |
-| 8 | HOKU Ads module | ✅ core | render/targeting/pacing/rollups/refund + serving (buying-wizard UI deferred) |
+| 8 | HOKU Ads module | ✅ done | render/targeting/pacing/rollups/refund + serving + **buying wizard, moderation queue, host participation (E2E)** |
 | 9 | Hardening | ✅ done | rate-limit trips; security headers; cookie boundary; axe a11y |
-| A–D | Acquisition funnel (minimal) | ✅ minimal | pipeline w/ mocks; suppression+privacy+verification guardrails; compliance → COUNSEL.md |
+| A–D | Acquisition funnel | ✅ done | pipeline w/ mocks; suppression+privacy+verification guardrails; **claim/verify wizard (E2E)**; compliance → COUNSEL.md |
+
+**Definition of done (§11) met:** all phases green + CI; `supabase/seed.sql`
+creates a themed published tenant with a directory entry **and one live ad
+serving on a second demo tenant's site** (validated against the real schema in
+`tests/unit/seed.test.ts`); README documents setup/scripts/tests; no hardcoded
+colors; cookie scoping + RLS verified by test.
 
 ## Environment constraints in this sandbox
 
@@ -129,9 +135,24 @@ and [`acquisition-module.md`](acquisition-module.md) (Phase A–D). A phase is
 - Serving endpoint `ads.hoku.com/api/serve` (→ `/ads/api/serve`): selects an
   eligible ad, logs an impression, returns the on-brand creative token config
   (demo campaign in the sandbox). **Unapproved campaigns never serve.**
-- **Deferred:** the multi-step buying-wizard UI (Creative→Targeting→Budget→
-  Pay→dashboard) and the manual moderation queue screen. All their underlying
-  behaviors are implemented + tested; only the admin UI surface remains.
+- **Admin surfaces (built):**
+  - Buying wizard at `app.hoku.com/ads/buy` — Creative → Targeting → Budget →
+    Review & Pay → submit-for-approval, with an on-brand live preview (reuses
+    the serving renderer), Anthropic copy suggestions (`lib/ads/copy.ts`,
+    injectable + local fallback), and flat prepaid packages with estimated reach
+    (`lib/ads/packages.ts`). `submitCampaign` creates the creative+campaign as
+    `pending` (RLS-scoped); it never self-approves.
+  - Campaign dashboard at `/ads`; moderation queue at `/moderation`
+    (platform_admin) with auto-flags + approve/reject and Stripe auto-refund on
+    reject (`lib/ads/review.ts`, `refundPayment`); host participation at
+    `/participation` (per-slot opt-in, default opt-in, `lib/ads/participation.ts`).
+  - Pure logic for all of the above is unit-tested in `tests/unit/ads-buy.test.ts`;
+    the wizard and queue are E2E-tested (`tests/e2e/ads-buy.spec.ts`,
+    `tests/e2e/moderation.spec.ts`).
+- **Server Actions note:** the control plane is reached via a host rewrite, so a
+  Server Action POST carries `x-forwarded-host: app.<base>`. Next's CSRF check
+  needs that host allow-listed (`experimental.serverActions.allowedOrigins` in
+  `next.config.ts`) or it rejects the action.
 
 ## Phase A–D notes (acquisition — minimal, compliance flagged for counsel)
 
@@ -154,6 +175,12 @@ and [`acquisition-module.md`](acquisition-module.md) (Phase A–D). A phase is
 - `lib/acq/claim.ts` (Phase B/C) — claim requires the token AND a verified
   second factor before transfer; token is single-use; founder credit + publish-
   on-claim flow through `activateTenant`/`recordClaim`. Tested.
-- **Deferred:** the claim/verify/payment UI screens and the live external
-  integrations (real Places/Lob/Playwright keys). Pipeline + claim logic are
-  implemented and tested; the customer-facing claim wizard is not built.
+- **Claim wizard (built):** customer-facing flow at `app.hoku.com/claim` —
+  postcard token → second-factor OTP (`lib/acq/verify.ts`) → claim. Wired to
+  `claimSite()`, so the token + verified-factor requirement is enforced through
+  the UI; on success the provisional site publishes and a founder credit is
+  applied. E2E: `tests/e2e/claim.spec.ts`. Claiming is the **inbound** half, so
+  it's functional; **outbound** OTP/postcard *delivery* stays counsel-gated
+  (COUNSEL.md) — demo mode reveals the code so the flow is testable offline.
+- **Still deferred (needs live keys, not code):** real Places/Lob/Playwright
+  integrations and live OTP delivery — all behind clearly-marked stubs.

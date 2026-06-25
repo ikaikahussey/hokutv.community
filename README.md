@@ -89,6 +89,30 @@ npm run gen:types           # regenerate lib/supabase/database.types.ts from sch
 Run `npm run gen:types` after every migration so TypeScript types track the
 schema.
 
+`supabase/seed.sql` creates the Definition-of-Done demo data: two themed,
+published tenants on subdomains (`kalihi-coffee`, `north-shore-surf`) with
+directory entries, and **one live ad** — `kalihi-coffee`'s approved campaign
+serving in `north-shore-surf`'s opted-in sidebar slot. The seed is idempotent
+and validated against the real schema in `tests/unit/seed.test.ts`.
+
+### Key routes (control plane, `app.hoku.com`)
+
+| Path | Purpose |
+|---|---|
+| `/login` | Magic-link sign-in |
+| `/editor` | Block CMS editor |
+| `/theme` | Brand theming |
+| `/domains` · `/billing` | Custom domain (paid) · Stripe upgrade |
+| `/ads` · `/ads/buy` | Campaign dashboard · buying wizard |
+| `/moderation` | Manual ad approval queue (platform_admin) |
+| `/participation` | Per-slot ad host opt-in/out |
+| `/claim` | Acquisition claim + ownership verification |
+
+> Server Actions on the control plane arrive via a host rewrite, so
+> `next.config.ts` allow-lists the app host under
+> `experimental.serverActions.allowedOrigins`; without it Next rejects the action
+> POSTs as cross-origin.
+
 ### Stripe (live dev)
 
 ```bash
