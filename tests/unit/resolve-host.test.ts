@@ -59,12 +59,18 @@ describe("resolveHost", () => {
     expect(resolveHost("hokusites.com", cfg).zone).toBe("unknown");
   });
 
-  it("treats an arbitrary/unknown host as unknown (404 in middleware)", () => {
-    expect(resolveHost("nope.example.com", cfg).zone).toBe("unknown");
+  it("treats an external FQDN as a custom domain (routed to tenant lookup)", () => {
+    expect(resolveHost("shop.example.com", cfg)).toMatchObject({
+      zone: "custom",
+      rewriteBase: "/s/shop.example.com",
+    });
+  });
+
+  it("treats an empty host as unknown", () => {
     expect(resolveHost("", cfg).zone).toBe("unknown");
   });
 
-  it("does not confuse other hoku.com subdomains with app/ads", () => {
+  it("does not treat our own hoku.com subdomains as custom domains", () => {
     expect(resolveHost("random.hoku.com", cfg).zone).toBe("unknown");
   });
 

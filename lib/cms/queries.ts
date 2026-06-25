@@ -19,22 +19,27 @@ export interface PublishedSite {
  * Theme lives on `tenants.theme` (Phase 4 input shape); in demo mode a stable
  * per-subdomain color is generated so each demo site looks distinct.
  */
-export async function getPublishedSite(subdomain: string): Promise<PublishedSite | null> {
+export async function getPublishedSite(hostKey: string): Promise<PublishedSite | null> {
   if (!isSupabaseConfigured()) {
+    // Demo mode: only bare subdomain labels get generated content. A full
+    // hostname (a custom domain, or a spoofed unknown host) has no demo → 404.
+    if (hostKey.includes(".")) return null;
     return {
-      page: demoHomePage(subdomain),
+      page: demoHomePage(hostKey),
       themeVars: buildThemeVars({
         ...DEFAULT_THEME_INPUT,
-        primary: colorFromSeed(subdomain),
+        primary: colorFromSeed(hostKey),
       }),
     };
   }
 
   const supabase = createSupabasePublicClient();
+  // Resolve by subdomain OR custom_domain (a paid tenant's verified domain).
+  const column = hostKey.includes(".") ? "custom_domain" : "subdomain";
   const { data: tenant } = await supabase
     .from("tenants")
     .select("id, theme")
-    .eq("subdomain", subdomain)
+    .eq(column, hostKey)
     .eq("is_published", true)
     .maybeSingle();
   if (!tenant) return null;

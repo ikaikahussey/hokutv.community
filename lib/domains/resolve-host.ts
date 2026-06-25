@@ -4,7 +4,7 @@ import type { DomainConfig } from "./config";
  * Which trust zone a request host belongs to. Middleware uses this to rewrite
  * into a collision-free internal segment and to enforce the cookie boundary.
  */
-export type Zone = "apex" | "app" | "ads" | "tenant" | "unknown";
+export type Zone = "apex" | "app" | "ads" | "tenant" | "custom" | "unknown";
 
 export interface HostResolution {
   zone: Zone;
@@ -72,6 +72,18 @@ export function resolveHost(rawHost: string, cfg: DomainConfig): HostResolution 
     if (subdomain && !subdomain.includes(" ")) {
       return { zone: "tenant", host, subdomain, rewriteBase: `/s/${subdomain}` };
     }
+  }
+
+  // A paid tenant's custom domain: any external FQDN that isn't one of our own
+  // domains. Routed to the tenant lookup by hostname (resolved against
+  // tenants.custom_domain); 404s if no tenant claims it.
+  if (
+    host.includes(".") &&
+    host !== appBaseDomain &&
+    host !== tenantBaseDomain &&
+    !host.endsWith(`.${appBaseDomain}`)
+  ) {
+    return { zone: "custom", host, subdomain: host, rewriteBase: `/s/${host}` };
   }
 
   return { zone: "unknown", host, rewriteBase: "" };

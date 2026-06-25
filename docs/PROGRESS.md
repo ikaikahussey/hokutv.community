@@ -11,7 +11,7 @@ and [`acquisition-module.md`](acquisition-module.md) (Phase A–D). A phase is
 | 2 | Auth + tenant isolation (RLS) | ✅ done | magic-link contract + **real RLS isolation via PGlite** |
 | 3 | Block-based CMS | ✅ done | create/edit/reorder/publish (UI E2E); unpublished 404 (RLS) |
 | 4 | Theming UI (brand tokens) | ✅ done | re-skin via tokens (E2E); WCAG AA enforced/auto-corrected |
-| 5 | Custom domains (paid tier) | ⬜ | plan gate; add/verify (Vercel API mocked) |
+| 5 | Custom domains (paid tier) | ✅ done | plan gate; add/verify (Vercel mocked); domains RLS |
 | 6 | Directory (apex) | ⬜ | only published+listed; grouping/search |
 | 7 | Billing (Stripe) | ⬜ | checkout upgrades plan; cancel reverts |
 | 8 | HOKU Ads module | ⬜ | on-brand render; targeting; pacing; refund |
@@ -99,3 +99,18 @@ and [`acquisition-module.md`](acquisition-module.md) (Phase A–D). A phase is
   the browser: changing the primary re-skins the CTA AND the CTA still passes
   WCAG AA. Unit tests cover scale direction, AA enforcement + auto-correction,
   and logo color suggestion.
+
+## Phase 5 notes
+
+- `lib/integrations/vercel.ts` — injectable Vercel Domains client (real fetch
+  impl; mocked in tests). `lib/domains/custom-domain.ts` — plan gate, hostname
+  normalization/validation, add + verify flow, DNS instructions; all deps
+  injected → unit-tested end to end without Vercel.
+- `0003_domains.sql` — `domains` table + RLS (tenant-scoped). A domain is only
+  promoted to `tenants.custom_domain` (and routed) once SSL is active.
+- Routing: `resolveHost` now classifies an external FQDN as `custom` and
+  rewrites to `/s/<host>`; `getPublishedSite` resolves by `custom_domain` for
+  dotted hosts (a demo dot-guard keeps spoofed unknown hosts → 404).
+- Admin `/domains` form is plan-gated via the same logic. Gate proven by units:
+  free plan never reaches Vercel; paid records hostname + pending verification;
+  activation mirrors to routing. `rls-domains` proves tenant isolation.
